@@ -69,8 +69,7 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
         };
 
         let mut new_children = Vec::with_capacity(children.Size()? as usize);
-        // System.Collections.Generic.List (.NET 6) does not seem to like
-        // the way windows-rs does iterators.
+        // This avoids first chance exceptions in .NET 6
         //for child in children {
         for i in 0..children.Size()? {
             let child = children.GetAt(i)?;
