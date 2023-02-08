@@ -8,12 +8,12 @@ fn main() -> std::io::Result<()> {
     let _ = std::fs::remove_file("Chewy.winmd");
 
     let windows_sdk_dir = std::env::var("WindowsSdkDir").expect("Failed to find Windows SDK path!");
-    let target_windows_sdk = "10.0.20348.0";
+    let windows_sdk_version = std::env::var("WindowsSDKVersion").expect("Failed to find Windows SDK version!");
 
     let metadata_dir = {
         let mut path = PathBuf::from(&windows_sdk_dir);
         path.push("UnionMetadata");
-        path.push(target_windows_sdk);
+        path.push(windows_sdk_version);
         path
     };
 
