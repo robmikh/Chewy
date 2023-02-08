@@ -1,11 +1,31 @@
 namespace Chewy
 {
-    runtimeclass Class
+    struct ChewyNode
     {
-        Class();
-        Class(Int32 property);
-        Int32 Property;
-        Class Make(Int32 value);
-        Object MakeTypeErased(Int32 value);
+        UInt64 Magic;
+    };
+
+    struct ChewyLayout
+    {
+        UInt32 Order;
+        Windows.Foundation.Size Size;
+        Windows.Foundation.Point Location;
+    };
+
+    [default_interface]
+    runtimeclass ChewyStyle
+    {
+        ChewyStyle(String style);
+    }
+
+    [default_interface]
+    runtimeclass ChewyTaffy
+    {
+        ChewyTaffy();
+
+        ChewyNode NewLeaf(ChewyStyle style);
+        void SetChildren(ChewyNode node, Windows.Foundation.Collections.IVectorView<ChewyNode> children);
+        void ComputeLayout(ChewyNode rootNode, Int32 width, Int32 height);
+        ChewyLayout GetLayout(ChewyNode node);
     }
 }

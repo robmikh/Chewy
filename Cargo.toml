@@ -13,6 +13,8 @@ taffy = "0.2.2"
 version = "0.44"
 features = [
     "implement",
+    "Foundation",
+    "Foundation_Collections",
     "Win32_Foundation",
     "Win32_System_WinRT",
 ]
