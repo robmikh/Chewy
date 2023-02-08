@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::*;
 
 fn main() -> std::io::Result<()> {
-    println!("cargo:rerun-if-changed=src/component.idl");
+    println!("cargo:rerun-if-changed=src/Chewy.idl");
     let _ = std::fs::remove_file("src/bindings.rs");
     let _ = std::fs::remove_file("Chewy.winmd");
 
@@ -24,8 +24,7 @@ fn main() -> std::io::Result<()> {
     };
 
     let output_winmd = {
-        let out_dir = std::env::var("OUT_DIR").expect("Failed to get output directory!");
-        let mut path = PathBuf::from(out_dir);
+        let mut path = PathBuf::from("metadata");
         path.push("Chewy.winmd");
         path
     };
