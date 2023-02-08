@@ -8,7 +8,8 @@ fn main() -> std::io::Result<()> {
     let _ = std::fs::remove_file("Chewy.winmd");
 
     let windows_sdk_dir = std::env::var("WindowsSdkDir").expect("Failed to find Windows SDK path!");
-    let windows_sdk_version = std::env::var("WindowsSDKVersion").expect("Failed to find Windows SDK version!");
+    let windows_sdk_version =
+        std::env::var("WindowsSDKVersion").expect("Failed to find Windows SDK version!");
 
     let metadata_dir = {
         let mut path = PathBuf::from(&windows_sdk_dir);
@@ -29,7 +30,7 @@ fn main() -> std::io::Result<()> {
         path
     };
 
-    Command::new("midlrt.exe")
+    let status = Command::new("midlrt.exe")
         .arg("/winrt")
         .arg("/nomidl")
         .arg("/h")
@@ -42,6 +43,10 @@ fn main() -> std::io::Result<()> {
         .arg(&output_winmd)
         .arg("src/Chewy.idl")
         .status()?;
+
+    if !status.success() {
+        panic!("Failed to generate metadata!")
+    }
 
     let files = vec![
         windows_metadata::reader::File::new(windows_path.to_str().unwrap())?,
