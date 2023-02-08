@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <chewy-Platform Condition="$(RuntimeIdentifier.EndsWith('-x64'))">x64</chewy-Platform>
+    <chewy-Platform Condition="$(RuntimeIdentifier.EndsWith('-x86'))"></chewy-Platform>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(chewy-Platform)' == ''">
+    <chewy-Platform Condition="'$(Platform)' == 'Win32'"></chewy-Platform>
+    <chewy-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</chewy-Platform>
+    <chewy-Platform Condition="'$(Platform)' == 'AnyCPU'"></chewy-Platform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Chewy">
+      <HintPath>$(MSBuildThisFileDirectory)..\..\lib\uap10.0\Chewy.winmd</HintPath>
+      <Implementation>Chewy.dll</Implementation>
+    </Reference>
+    <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win10-$(chewy-Platform)\native\Chewy.dll" Condition="'$(chewy-Platform)' != ''" />
+  </ItemGroup>
+
+  <Target Name="PlatformCheck" BeforeTargets="InjectReference"
+    Condition=" ( ('$(chewy-Platform)' != 'x64') AND ('$(chewy-Platform)' != 'ARM64') )">
+    <Error  Text="$(MSBuildThisFileName) does not work correctly on '$(Platform)' 
+                     platform. You need to specify platform (x64 or ARM64)." />
+  </Target>
+
+</Project>

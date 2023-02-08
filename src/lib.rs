@@ -10,8 +10,9 @@ use taffy::{
     Taffy,
 };
 use windows::{
-    core::{implement, AsImpl, IInspectable, ManuallyDrop, Result, HRESULT, HSTRING, PCWSTR},
-    w,
+    core::{
+        implement, AsImpl, Error, IInspectable, ManuallyDrop, Result, RuntimeName, HRESULT, HSTRING,
+    },
     Foundation::Point,
     Win32::{
         Foundation::{E_BOUNDS, E_INVALIDARG, S_OK},
@@ -20,9 +21,6 @@ use windows::{
 };
 
 mod bindings;
-
-const CHEWY_TAFFY_NAME: PCWSTR = w!("Chewy.ChewyTaffy");
-const CHEWY_STYLE_NAME: PCWSTR = w!("Chewy.ChewyStyle");
 
 #[implement(bindings::ChewyTaffy)]
 struct ChewyTaffy(RwLock<Taffy>);
@@ -71,7 +69,11 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
         };
 
         let mut new_children = Vec::with_capacity(children.Size()? as usize);
-        for child in children {
+        // System.Collections.Generic.List (.NET 6) does not seem to like
+        // the way windows-rs does iterators.
+        //for child in children {
+        for i in 0..children.Size()? {
+            let child = children.GetAt(i)?;
             let taffy_node: Node = unsafe { std::mem::transmute(child) };
             new_children.push(taffy_node);
         }
@@ -174,7 +176,8 @@ impl bindings::IChewyStyleFactory_Impl for ChewyStyleFactory {
 
         let mut taffy_style = Style::default();
         for pair in pairs {
-            if let Some((property_name, property_value)) = pair.split_once(':') {
+            if let Some((property_name, property_value)) = pair.trim().split_once(':') {
+                let property_name = property_name.trim();
                 let property_value = property_value.trim();
                 match property_name {
                     "flex-direction" => {
@@ -248,26 +251,34 @@ unsafe extern "stdcall" fn DllGetActivationFactory(
     name: ManuallyDrop<HSTRING>,
     result: *mut *mut std::ffi::c_void,
 ) -> HRESULT {
-    let name: PCWSTR = if let Some(name) = name.as_ref() {
-        PCWSTR(name.as_ptr())
+    let name = if let Some(name) = name.as_ref() {
+        name.to_string()
     } else {
         return E_INVALIDARG;
     };
 
-    let factory: *mut std::ffi::c_void = match name {
-        CHEWY_TAFFY_NAME => {
-            std::mem::transmute::<IActivationFactory, _>(ChewyTaffyFactory().into())
-        }
-        CHEWY_STYLE_NAME => {
-            std::mem::transmute::<IChewyStyleFactory, _>(ChewyStyleFactory().into())
-        }
-        _ => {
-            return E_INVALIDARG;
-        }
+    let factory = match get_activation_factory(&name) {
+        Ok(factory) => factory,
+        Err(error) => return error.code(),
     };
 
     *result = std::mem::transmute(factory);
     S_OK
+}
+
+unsafe fn get_activation_factory(name: &str) -> Result<*mut std::ffi::c_void> {
+    let factory: *mut std::ffi::c_void = match name {
+        bindings::ChewyTaffy::NAME => {
+            std::mem::transmute::<IActivationFactory, _>(ChewyTaffyFactory().into())
+        }
+        bindings::ChewyStyle::NAME => {
+            std::mem::transmute::<IChewyStyleFactory, _>(ChewyStyleFactory().into())
+        }
+        _ => {
+            return Err(E_INVALIDARG.into());
+        }
+    };
+    Ok(factory)
 }
 
 trait ToWindowsResult<T> {
@@ -281,13 +292,15 @@ impl<T> ToWindowsResult<T> for TaffyResult<T> {
             Err(taffy_error) => {
                 let error = match taffy_error {
                     taffy::error::TaffyError::ChildIndexOutOfBounds {
-                        parent: _,
-                        child_index: _,
-                        child_count: _,
-                    } => E_BOUNDS,
-                    taffy::error::TaffyError::InvalidParentNode(_) => E_INVALIDARG,
-                    taffy::error::TaffyError::InvalidChildNode(_) => E_INVALIDARG,
-                    taffy::error::TaffyError::InvalidInputNode(_) => E_INVALIDARG,
+                        parent,
+                        child_index,
+                        child_count,
+                    } => {
+                        Error::new(E_BOUNDS, HSTRING::from(format!("ChildIndexOutOfBounds: Parent: {:?}  ChildIndex: {:?}  ChildCount: {:?}", parent, child_index, child_count)))
+                    },
+                    taffy::error::TaffyError::InvalidParentNode(node) => Error::new(E_INVALIDARG, HSTRING::from(format!("InvalidParentNode: {:?}", node))),
+                    taffy::error::TaffyError::InvalidChildNode(node) => Error::new(E_INVALIDARG, HSTRING::from(format!("InvalidChildNode: {:?}", node))),
+                    taffy::error::TaffyError::InvalidInputNode(node) => Error::new(E_INVALIDARG, HSTRING::from(format!("InvalidInputNode: {:?}", node))),
                 };
                 Err(error.into())
             }
@@ -305,11 +318,103 @@ fn parse_f32(str: &str) -> Result<f32> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::RwLock;
+
+    use crate::bindings;
+    use windows::{
+        core::{implement, Error, Result, RuntimeType, HSTRING},
+        Foundation::Collections::{IIterable_Impl, IIterator, IVectorView, IVectorView_Impl},
+        Win32::Foundation::E_BOUNDS,
+    };
+
+    fn err_bounds() -> Error {
+        E_BOUNDS.into()
+    }
+
+    #[implement(IVectorView<T>)]
+    struct VectorView<T>(RwLock<Vec<T::DefaultType>>)
+    where
+        T: RuntimeType;
+
+    impl<T: RuntimeType + 'static> VectorView<T> {
+        fn new(vec: Vec<T::DefaultType>) -> Self {
+            Self(RwLock::new(vec))
+        }
+
+        // Methods common to IVector and IVectorView:
+        fn GetAt(&self, index: u32) -> Result<T> {
+            let reader = self.0.read().unwrap();
+            let item = reader.get(index as usize).ok_or_else(err_bounds)?;
+            T::from_default(item)
+        }
+        fn Size(&self) -> Result<u32> {
+            let reader = self.0.read().unwrap();
+            Ok(reader.len() as _)
+        }
+        fn IndexOf(&self, value: &T::DefaultType, result: &mut u32) -> Result<bool> {
+            let reader = self.0.read().unwrap();
+            match reader.iter().position(|element| element == value) {
+                Some(index) => {
+                    *result = index as _;
+                    Ok(true)
+                }
+                None => Ok(false),
+            }
+        }
+        fn GetMany(&self, _startindex: u32, _items: &mut [T::DefaultType]) -> Result<u32> {
+            todo!();
+        }
+    }
+
+    impl<T: RuntimeType + 'static> IVectorView_Impl<T> for VectorView<T> {
+        fn GetAt(&self, index: u32) -> Result<T> {
+            self.GetAt(index)
+        }
+        fn Size(&self) -> Result<u32> {
+            self.Size()
+        }
+        fn IndexOf(&self, value: &T::DefaultType, result: &mut u32) -> Result<bool> {
+            self.IndexOf(value, result)
+        }
+        fn GetMany(&self, startindex: u32, items: &mut [T::DefaultType]) -> Result<u32> {
+            self.GetMany(startindex, items)
+        }
+    }
+
+    impl<T: RuntimeType + 'static> IIterable_Impl<T> for VectorView<T> {
+        fn First(&self) -> Result<IIterator<T>> {
+            todo!()
+        }
+    }
+
     #[test]
     fn node_size_test() {
         assert_eq!(
-            std::mem::size_of::<crate::bindings::ChewyNode>(),
+            std::mem::size_of::<bindings::ChewyNode>(),
             std::mem::size_of::<taffy::prelude::Node>()
         );
+    }
+
+    #[test]
+    fn smoke_test() -> Result<()> {
+        let taffy = bindings::ChewyTaffy::new()?;
+
+        let root_node = taffy.NewLeaf(&bindings::ChewyStyle::CreateInstance(&HSTRING::from(
+            "flex-direction: row;flex-wrap: wrap;width: 100%;height: 100%",
+        ))?)?;
+
+        let box_style = bindings::ChewyStyle::CreateInstance(&HSTRING::from(
+            "margin: 10px;width: 170px;height: 170px",
+        ))?;
+        let mut nodes = Vec::new();
+        for _ in 0..98 {
+            let node = taffy.NewLeaf(&box_style)?;
+            nodes.push(node);
+        }
+        taffy.SetChildren(root_node, &VectorView::new(nodes).into())?;
+
+        taffy.ComputeLayout(root_node, 800, -1)?;
+
+        Ok(())
     }
 }

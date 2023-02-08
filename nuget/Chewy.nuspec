@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<package >
+  <metadata minClientVersion="5.3">
+    <id>Chewy</id>
+    <version>0.0.0-SpecifyVersionOnCommandline</version>
+    <title>Chewy</title>
+    <authors>Robert Mikhayelyan</authors>
+    <owners>Robert Mikhayelyan</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/robmikh/Chewy</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>A WinRT wrapper for the crate Taffy</description>
+    <releaseNotes>
+</releaseNotes>
+    <copyright>Copyright 2023</copyright>
+    <readme>docs\readme.md</readme>
+    <dependencies>
+      <group targetFramework="UAP10.0">
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+      <file target="docs\readme.md" src="nugetreadme.md"/>
+
+      <file target="build\native\Chewy.targets" src="Chewy.native.targets" />
+      <file target="build\native\Chewy.props" src="Chewy.props" />
+
+      <file target="build\netcoreapp3.0\Chewy.targets"  src="Chewy.net.targets" />
+      <file target="build\net45\Chewy.targets"          src="Chewy.net.targets" />
+
+      <file target="lib\uap10.0" src="..\metadata\Chewy.winmd" />
+
+      <file target="runtimes\win10-arm64\native\Chewy.dll" src="..\target\aarch64-pc-windows-msvc\release\chewy.dll" />
+      <file target="runtimes\win10-arm64\native\Chewy.pdb" src="..\target\aarch64-pc-windows-msvc\release\chewy.pdb" />
+
+      <file target="runtimes\win10-x64\native\Chewy.dll" src="..\target\x86_64-pc-windows-msvc\release\chewy.dll" />
+      <file target="runtimes\win10-x64\native\Chewy.pdb" src="..\target\x86_64-pc-windows-msvc\release\chewy.pdb" />
+  </files>
+</package>

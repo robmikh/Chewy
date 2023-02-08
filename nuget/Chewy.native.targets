@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <chewy-Platform Condition="'$(Platform)' == 'Win32'"></chewy-Platform>
+    <chewy-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</chewy-Platform>
+  </PropertyGroup>
+
+  <Target Name="PlatformCheck" BeforeTargets="InjectReference"
+    Condition=" ( ('$(chewy-Platform)' != 'x64') AND ('$(chewy-Platform)' != 'ARM64') )">
+    <Error  Text="$(MSBuildThisFileName) does not work correctly on '$(Platform)' 
+                     platform. You need to specify platform (x64 or ARM64)." />
+  </Target>
+  
+  <ItemGroup>
+    <Reference Include="$(MSBuildThisFileDirectory)..\..\lib\uap10.0\Chewy.winmd">
+      <Implementation>Chewy.dll</Implementation>
+    </Reference>
+    <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win10-$(chewy-Platform)\native\Chewy.dll" />
+  </ItemGroup>
+</Project>
