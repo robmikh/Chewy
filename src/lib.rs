@@ -1,10 +1,23 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::{sync::RwLock};
+use std::sync::RwLock;
 
 use bindings::IChewyStyleFactory;
-use taffy::{Taffy, prelude::{Node, AvailableSpace, Size, Rect}, style::{Style, FlexDirection, FlexWrap, Dimension}, error::TaffyResult};
-use windows::{core::{implement, IInspectable, ManuallyDrop, HSTRING, HRESULT, Result, PCWSTR, AsImpl}, Win32::{System::WinRT::{IActivationFactory_Impl, IActivationFactory}, Foundation::{S_OK, E_INVALIDARG, E_BOUNDS}}, w, Foundation::Point};
+use taffy::{
+    error::TaffyResult,
+    prelude::{AvailableSpace, Node, Rect, Size},
+    style::{Dimension, FlexDirection, FlexWrap, Style},
+    Taffy,
+};
+use windows::{
+    core::{implement, AsImpl, IInspectable, ManuallyDrop, Result, HRESULT, HSTRING, PCWSTR},
+    w,
+    Foundation::Point,
+    Win32::{
+        Foundation::{E_BOUNDS, E_INVALIDARG, S_OK},
+        System::WinRT::{IActivationFactory, IActivationFactory_Impl},
+    },
+};
 
 mod bindings;
 
@@ -25,14 +38,15 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
             return Err(E_INVALIDARG.into());
         };
         let style = style.as_impl();
-        let taffy_style = {
-            style.0.read().unwrap().clone()
-        };
+        let taffy_style = { style.0.read().unwrap().clone() };
 
         let mut taffy = self.0.write().unwrap();
         let node = taffy.new_leaf(taffy_style).win_ok()?;
 
-        assert_eq!(std::mem::size_of::<bindings::ChewyNode>(), std::mem::size_of::<Node>());
+        assert_eq!(
+            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<Node>()
+        );
         let chewy_node = unsafe { std::mem::transmute(node) };
         Ok(chewy_node)
     }
@@ -44,7 +58,10 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
             windows::Foundation::Collections::IVectorView<bindings::ChewyNode>,
         >,
     ) -> windows::core::Result<()> {
-        assert_eq!(std::mem::size_of::<bindings::ChewyNode>(), std::mem::size_of::<Node>());
+        assert_eq!(
+            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<Node>()
+        );
 
         let taffy_node: Node = unsafe { std::mem::transmute(*node) };
         let children = if let Some(children) = children.as_ref() {
@@ -71,7 +88,10 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
         width: i32,
         height: i32,
     ) -> windows::core::Result<()> {
-        assert_eq!(std::mem::size_of::<bindings::ChewyNode>(), std::mem::size_of::<Node>());
+        assert_eq!(
+            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<Node>()
+        );
         let taffy_node: Node = unsafe { std::mem::transmute(*root_node) };
 
         let new_width = if width >= 0 {
@@ -86,13 +106,27 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
         };
 
         let mut taffy = self.0.write().unwrap();
-        taffy.compute_layout(taffy_node, Size { width: new_width, height: new_height }).win_ok()?;
+        taffy
+            .compute_layout(
+                taffy_node,
+                Size {
+                    width: new_width,
+                    height: new_height,
+                },
+            )
+            .win_ok()?;
 
         Ok(())
     }
 
-    fn GetLayout(&self, node: &bindings::ChewyNode) -> windows::core::Result<bindings::ChewyLayout> {
-        assert_eq!(std::mem::size_of::<bindings::ChewyNode>(), std::mem::size_of::<Node>());
+    fn GetLayout(
+        &self,
+        node: &bindings::ChewyNode,
+    ) -> windows::core::Result<bindings::ChewyLayout> {
+        assert_eq!(
+            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<Node>()
+        );
         let taffy_node: Node = unsafe { std::mem::transmute(*node) };
 
         let taffy = self.0.read().unwrap();
@@ -100,8 +134,14 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy {
 
         let layout = bindings::ChewyLayout {
             Order: taffy_layout.order,
-            Size: windows::Foundation::Size { Width: taffy_layout.size.width, Height: taffy_layout.size.height },
-            Location: Point { X: taffy_layout.location.x, Y: taffy_layout.location.y },
+            Size: windows::Foundation::Size {
+                Width: taffy_layout.size.width,
+                Height: taffy_layout.size.height,
+            },
+            Location: Point {
+                X: taffy_layout.location.x,
+                Y: taffy_layout.location.y,
+            },
         };
         Ok(layout)
     }
@@ -148,7 +188,7 @@ impl bindings::IChewyStyleFactory_Impl for ChewyStyleFactory {
                             }
                         };
                         taffy_style.flex_direction = direction;
-                    },
+                    }
                     "flex-wrap" => {
                         let wrap = match property_value {
                             "nowrap" => FlexWrap::NoWrap,
@@ -159,22 +199,22 @@ impl bindings::IChewyStyleFactory_Impl for ChewyStyleFactory {
                             }
                         };
                         taffy_style.flex_wrap = wrap;
-                    },
+                    }
                     "width" => {
                         taffy_style.size.width = parse_dimension(property_value)?;
-                    },
+                    }
                     "height" => {
                         taffy_style.size.height = parse_dimension(property_value)?;
-                    },
+                    }
                     "margin" => {
                         let value = parse_dimension(property_value)?;
                         taffy_style.margin = Rect {
                             left: value,
                             top: value,
                             right: value,
-                            bottom: value
+                            bottom: value,
                         };
-                    },
+                    }
                     _ => {
                         return Err(E_INVALIDARG.into());
                     }
@@ -217,7 +257,7 @@ unsafe extern "stdcall" fn DllGetActivationFactory(
     let factory: *mut std::ffi::c_void = match name {
         CHEWY_TAFFY_NAME => {
             std::mem::transmute::<IActivationFactory, _>(ChewyTaffyFactory().into())
-        },
+        }
         CHEWY_STYLE_NAME => {
             std::mem::transmute::<IChewyStyleFactory, _>(ChewyStyleFactory().into())
         }
@@ -240,13 +280,17 @@ impl<T> ToWindowsResult<T> for TaffyResult<T> {
             Ok(result) => Ok(result),
             Err(taffy_error) => {
                 let error = match taffy_error {
-                    taffy::error::TaffyError::ChildIndexOutOfBounds { parent: _, child_index: _, child_count: _ } => E_BOUNDS,
+                    taffy::error::TaffyError::ChildIndexOutOfBounds {
+                        parent: _,
+                        child_index: _,
+                        child_count: _,
+                    } => E_BOUNDS,
                     taffy::error::TaffyError::InvalidParentNode(_) => E_INVALIDARG,
                     taffy::error::TaffyError::InvalidChildNode(_) => E_INVALIDARG,
                     taffy::error::TaffyError::InvalidInputNode(_) => E_INVALIDARG,
                 };
                 Err(error.into())
-            },
+            }
         }
     }
 }
@@ -263,6 +307,9 @@ fn parse_f32(str: &str) -> Result<f32> {
 mod tests {
     #[test]
     fn node_size_test() {
-        assert_eq!(std::mem::size_of::<crate::bindings::ChewyNode>(), std::mem::size_of::<taffy::prelude::Node>());
+        assert_eq!(
+            std::mem::size_of::<crate::bindings::ChewyNode>(),
+            std::mem::size_of::<taffy::prelude::Node>()
+        );
     }
 }
