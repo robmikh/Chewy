@@ -1,0 +1,22 @@
+[package]
+name = "chewy"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+taffy = "0.2.2"
+
+[dependencies.windows]
+version = "0.44"
+features = [
+    "implement",
+    "Win32_Foundation",
+    "Win32_System_WinRT",
+]
+
+[build-dependencies]
+windows-bindgen = "0.44"
+windows-metadata = "0.44"
