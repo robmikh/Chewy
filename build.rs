@@ -5,7 +5,7 @@ use std::process::*;
 fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=src/component.idl");
     let _ = std::fs::remove_file("src/bindings.rs");
-    let _ = std::fs::remove_file("component.winmd");
+    let _ = std::fs::remove_file("Chewy.winmd");
 
     let windows_sdk_dir = std::env::var("WindowsSdkDir").expect("Failed to find Windows SDK path!");
     let target_windows_sdk = "10.0.20348.0";
@@ -26,7 +26,7 @@ fn main() -> std::io::Result<()> {
     let output_winmd = {
         let out_dir = std::env::var("OUT_DIR").expect("Failed to get output directory!");
         let mut path = PathBuf::from(out_dir);
-        path.push("component.winmd");
+        path.push("Chewy.winmd");
         path
     };
 
@@ -41,7 +41,7 @@ fn main() -> std::io::Result<()> {
         .arg(&windows_path)
         .arg("/winmd")
         .arg(&output_winmd)
-        .arg("src/component.idl")
+        .arg("src/Chewy.idl")
         .status()?;
 
     let files = vec![
@@ -51,7 +51,7 @@ fn main() -> std::io::Result<()> {
 
     write(
         "src/bindings.rs",
-        windows_bindgen::component("Component", &files),
+        windows_bindgen::component("Chewy", &files),
     )?;
 
     Command::new("rustfmt").arg("src/bindings.rs").status()?;

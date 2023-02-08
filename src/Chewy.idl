@@ -1,4 +1,4 @@
-namespace Component
+namespace Chewy
 {
     runtimeclass Class
     {
