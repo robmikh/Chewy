@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/robmikh/Chewy</projectUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>A WinRT wrapper for the crate Taffy</description>
+    <description>A WinRT wrapper for the Taffy crate.</description>
     <releaseNotes>
 </releaseNotes>
     <copyright>Copyright 2023</copyright>
