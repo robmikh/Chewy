@@ -8,9 +8,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 taffy = "0.2.2"
+windows-core = "0.58.0"
 
 [dependencies.windows]
-version = "0.44"
+version = "0.58"
 features = [
     "implement",
     "Foundation",
@@ -20,5 +21,5 @@ features = [
 ]
 
 [build-dependencies]
-windows-bindgen = "0.44"
-windows-metadata = "0.44"
+windows-bindgen = "0.58"
+windows-metadata = "0.58"

@@ -1,4 +1,3 @@
-use std::fs::*;
 use std::path::PathBuf;
 use std::process::*;
 
@@ -48,15 +47,18 @@ fn main() -> std::io::Result<()> {
         panic!("Failed to generate metadata!")
     }
 
-    let files = vec![
-        windows_metadata::reader::File::new(windows_path.to_str().unwrap())?,
-        windows_metadata::reader::File::new(output_winmd.to_str().unwrap())?,
-    ];
-
-    write(
+    windows_bindgen::bindgen([
+        "--in",
+        output_winmd.to_str().unwrap(),
+        windows_path.to_str().unwrap(),
+        "--out",
         "src/bindings.rs",
-        windows_bindgen::component("Chewy", &files),
-    )?;
+        "--filter",
+        "Chewy",
+        "--config",
+        "implement",
+    ])
+    .unwrap();
 
     Command::new("rustfmt").arg("src/bindings.rs").status()?;
     Ok(())
