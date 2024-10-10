@@ -25,6 +25,9 @@ fn main() -> std::io::Result<()> {
 
     let output_winmd = {
         let mut path = PathBuf::from("metadata");
+        if !path.exists() {
+            std::fs::create_dir(&path).unwrap();
+        }
         path.push("Chewy.winmd");
         path
     };
