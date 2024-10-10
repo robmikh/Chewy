@@ -4,7 +4,7 @@ use std::process::*;
 fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=src/Chewy.idl");
     let _ = std::fs::remove_file("src/bindings.rs");
-    let _ = std::fs::remove_file("Chewy.winmd");
+    let _ = std::fs::remove_file("metadata/Chewy.winmd");
 
     let windows_sdk_dir = std::env::var("WindowsSdkDir").expect("Failed to find Windows SDK path!");
     let windows_sdk_version =
@@ -27,6 +27,15 @@ fn main() -> std::io::Result<()> {
         let mut path = PathBuf::from("metadata");
         path.push("Chewy.winmd");
         path
+    };
+
+    // For whatever reason, midlrt doesn't like trailing slashes
+    let metadata_dir = {
+        let mut metadata_dir = format!("{}", metadata_dir.display());
+        if metadata_dir.ends_with("\\") {
+            metadata_dir.remove(metadata_dir.len() - 1);
+        }
+        metadata_dir
     };
 
     let status = Command::new("midlrt.exe")
