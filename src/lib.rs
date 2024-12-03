@@ -2,7 +2,7 @@
 
 use std::sync::RwLock;
 
-use bindings::Chewy::IChewyStyleFactory;
+use bindings::{Windows::Foundation::Point, Chewy::IChewyStyleFactory};
 use taffy::{
     error::TaffyResult,
     prelude::{AvailableSpace, Node, Rect, Size},
@@ -11,7 +11,7 @@ use taffy::{
 };
 use windows::{
     core::{implement, AsImpl, Error, IInspectable, Ref, Result, RuntimeName, HRESULT, HSTRING},
-    Foundation::Point,
+    //Foundation::Point,
     Win32::{
         Foundation::{E_BOUNDS, E_INVALIDARG, S_OK},
         System::WinRT::{IActivationFactory, IActivationFactory_Impl},
@@ -51,7 +51,7 @@ impl bindings::Chewy::IChewyTaffy_Impl for ChewyTaffy_Impl {
         &self,
         node: &bindings::Chewy::ChewyNode,
         children: core::option::Option<
-            &windows::Foundation::Collections::IVectorView<bindings::Chewy::ChewyNode>,
+            &bindings::Windows::Foundation::Collections::IVectorView<bindings::Chewy::ChewyNode>,
         >,
     ) -> windows::core::Result<()> {
         assert_eq!(
@@ -133,7 +133,7 @@ impl bindings::Chewy::IChewyTaffy_Impl for ChewyTaffy_Impl {
 
         let layout = bindings::Chewy::ChewyLayout {
             Order: taffy_layout.order,
-            Size: windows::Foundation::Size {
+            Size: bindings::Windows::Foundation::Size {
                 Width: taffy_layout.size.width,
                 Height: taffy_layout.size.height,
             },
