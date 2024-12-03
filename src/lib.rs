@@ -51,7 +51,7 @@ impl bindings::Chewy::IChewyTaffy_Impl for ChewyTaffy_Impl {
         &self,
         node: &bindings::Chewy::ChewyNode,
         children: core::option::Option<
-            &bindings::Windows::Foundation::Collections::IVectorView<bindings::Chewy::ChewyNode>,
+            &windows::Foundation::Collections::IVectorView<bindings::Chewy::ChewyNode>,
         >,
     ) -> windows::core::Result<()> {
         assert_eq!(

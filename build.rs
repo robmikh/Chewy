@@ -67,7 +67,8 @@ fn main() -> std::io::Result<()> {
         "src/bindings.rs",
         "--filter",
         "Chewy",
-        "Windows.Foundation.Collections",
+        "--reference",
+        "windows,skip-root,Windows.Foundation",
         "--implement",
     ]);
 
