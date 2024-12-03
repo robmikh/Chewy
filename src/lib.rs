@@ -2,7 +2,7 @@
 
 use std::sync::RwLock;
 
-use bindings::IChewyStyleFactory;
+use bindings::Chewy::IChewyStyleFactory;
 use taffy::{
     error::TaffyResult,
     prelude::{AvailableSpace, Node, Rect, Size},
@@ -20,14 +20,14 @@ use windows::{
 
 mod bindings;
 
-#[implement(bindings::ChewyTaffy)]
+#[implement(bindings::Chewy::ChewyTaffy)]
 struct ChewyTaffy(RwLock<Taffy>);
 
-impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
+impl bindings::Chewy::IChewyTaffy_Impl for ChewyTaffy_Impl {
     fn NewLeaf(
         &self,
-        style: core::option::Option<&bindings::ChewyStyle>,
-    ) -> windows::core::Result<bindings::ChewyNode> {
+        style: core::option::Option<&bindings::Chewy::ChewyStyle>,
+    ) -> windows::core::Result<bindings::Chewy::ChewyNode> {
         let style = if let Some(style) = style.as_ref() {
             style
         } else {
@@ -40,7 +40,7 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
         let node = taffy.new_leaf(taffy_style).win_ok()?;
 
         assert_eq!(
-            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<bindings::Chewy::ChewyNode>(),
             std::mem::size_of::<Node>()
         );
         let chewy_node = unsafe { std::mem::transmute(node) };
@@ -49,13 +49,13 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
 
     fn SetChildren(
         &self,
-        node: &bindings::ChewyNode,
+        node: &bindings::Chewy::ChewyNode,
         children: core::option::Option<
-            &windows::Foundation::Collections::IVectorView<bindings::ChewyNode>,
+            &windows::Foundation::Collections::IVectorView<bindings::Chewy::ChewyNode>,
         >,
     ) -> windows::core::Result<()> {
         assert_eq!(
-            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<bindings::Chewy::ChewyNode>(),
             std::mem::size_of::<Node>()
         );
 
@@ -83,12 +83,12 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
 
     fn ComputeLayout(
         &self,
-        root_node: &bindings::ChewyNode,
+        root_node: &bindings::Chewy::ChewyNode,
         width: i32,
         height: i32,
     ) -> windows::core::Result<()> {
         assert_eq!(
-            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<bindings::Chewy::ChewyNode>(),
             std::mem::size_of::<Node>()
         );
         let taffy_node: Node = unsafe { std::mem::transmute(*root_node) };
@@ -120,10 +120,10 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
 
     fn GetLayout(
         &self,
-        node: &bindings::ChewyNode,
-    ) -> windows::core::Result<bindings::ChewyLayout> {
+        node: &bindings::Chewy::ChewyNode,
+    ) -> windows::core::Result<bindings::Chewy::ChewyLayout> {
         assert_eq!(
-            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<bindings::Chewy::ChewyNode>(),
             std::mem::size_of::<Node>()
         );
         let taffy_node: Node = unsafe { std::mem::transmute(*node) };
@@ -131,7 +131,7 @@ impl bindings::IChewyTaffy_Impl for ChewyTaffy_Impl {
         let taffy = self.0.read().unwrap();
         let taffy_layout = taffy.layout(taffy_node).win_ok()?;
 
-        let layout = bindings::ChewyLayout {
+        let layout = bindings::Chewy::ChewyLayout {
             Order: taffy_layout.order,
             Size: windows::Foundation::Size {
                 Width: taffy_layout.size.width,
@@ -155,19 +155,19 @@ impl IActivationFactory_Impl for ChewyTaffyFactory_Impl {
     }
 }
 
-#[implement(bindings::ChewyStyle)]
+#[implement(bindings::Chewy::ChewyStyle)]
 struct ChewyStyle(RwLock<Style>);
 
-impl bindings::IChewyStyle_Impl for ChewyStyle_Impl {}
+impl bindings::Chewy::IChewyStyle_Impl for ChewyStyle_Impl {}
 
-#[implement(bindings::IChewyStyleFactory)]
+#[implement(bindings::Chewy::IChewyStyleFactory)]
 struct ChewyStyleFactory();
 
-impl bindings::IChewyStyleFactory_Impl for ChewyStyleFactory_Impl {
+impl bindings::Chewy::IChewyStyleFactory_Impl for ChewyStyleFactory_Impl {
     fn CreateInstance(
         &self,
         style: &windows::core::HSTRING,
-    ) -> windows::core::Result<bindings::ChewyStyle> {
+    ) -> windows::core::Result<bindings::Chewy::ChewyStyle> {
         let style_string = style.to_string();
         let pairs = style_string.split(';');
 
@@ -261,10 +261,10 @@ unsafe extern "stdcall" fn DllGetActivationFactory(
 
 unsafe fn get_activation_factory(name: &str) -> Result<*mut std::ffi::c_void> {
     let factory: *mut std::ffi::c_void = match name {
-        bindings::ChewyTaffy::NAME => {
+        bindings::Chewy::ChewyTaffy::NAME => {
             std::mem::transmute::<IActivationFactory, _>(ChewyTaffyFactory().into())
         }
-        bindings::ChewyStyle::NAME => {
+        bindings::Chewy::ChewyStyle::NAME => {
             std::mem::transmute::<IChewyStyleFactory, _>(ChewyStyleFactory().into())
         }
         _ => {
@@ -311,7 +311,7 @@ fn parse_f32(str: &str) -> Result<f32> {
 
 #[cfg(test)]
 mod tests {
-    use crate::bindings::{self, ChewyNode};
+    use crate::bindings::Chewy::ChewyNode;
     use windows::{
         core::{Result, HSTRING},
         Foundation::Collections::IVectorView,
@@ -320,20 +320,20 @@ mod tests {
     #[test]
     fn node_size_test() {
         assert_eq!(
-            std::mem::size_of::<bindings::ChewyNode>(),
+            std::mem::size_of::<crate::bindings::Chewy::ChewyNode>(),
             std::mem::size_of::<taffy::prelude::Node>()
         );
     }
 
     #[test]
     fn smoke_test() -> Result<()> {
-        let taffy = bindings::ChewyTaffy::new()?;
+        let taffy = crate::bindings::Chewy::ChewyTaffy::new()?;
 
-        let root_node = taffy.NewLeaf(&bindings::ChewyStyle::CreateInstance(&HSTRING::from(
+        let root_node = taffy.NewLeaf(&crate::bindings::Chewy::ChewyStyle::CreateInstance(&HSTRING::from(
             "flex-direction: row;flex-wrap: wrap;width: 100%;height: 100%",
         ))?)?;
 
-        let box_style = bindings::ChewyStyle::CreateInstance(&HSTRING::from(
+        let box_style = crate::bindings::Chewy::ChewyStyle::CreateInstance(&HSTRING::from(
             "margin: 10px;width: 170px;height: 170px",
         ))?;
         let mut nodes = Vec::new();

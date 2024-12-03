@@ -67,10 +67,8 @@ fn main() -> std::io::Result<()> {
         "src/bindings.rs",
         "--filter",
         "Chewy",
-        "--config",
-        "implement",
-    ])
-    .unwrap();
+        "--implement",
+    ]);
 
     Command::new("rustfmt").arg("src/bindings.rs").status()?;
     Ok(())
